@@ -7,5 +7,8 @@ service cloud.firestore {
     match /common/terms{
       allow read : if true;
     }
+    match /mailinglist/{document=**}{
+      allow read,write: if true;
+    }
   }
 }

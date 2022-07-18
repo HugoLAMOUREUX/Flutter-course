@@ -26,36 +26,46 @@ class _GuestScreenState extends State<GuestScreen> {
   void initState() {
     super.initState();
 
+    AuthScreen authScreen = AuthScreen(
+      onChangedStep: (index, value) async {
+        StateRegistration stateRegistration = await _userService.mailinglist(
+            value, StateRegistration.IN_PROGRESS);
+        setState(() {
+          _indexSelected = index;
+          _email = value;
+
+          if (stateRegistration == StateRegistration.COMPLETE) {
+            _indexSelected = _widgets.length - 1;
+          }
+        });
+      },
+    );
+
+    PasswordScreen passwordScreen = PasswordScreen(
+        onChangedStep: (index, value) => setState(() {
+              if (index != 3) {
+                _indexSelected = index;
+              }
+              if (value != "") {
+                _userService
+                    .auth(UserModel(email: _email, password: value))
+                    .then((value) {
+                  if (value != "" && value != null) {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => HomeScreen()));
+                  }
+                });
+              }
+            }));
+
     _commonService.terms.then((terms) {
       setState(() {
         _widgets.addAll([
-          AuthScreen(
-            onChangedStep: (index, value) => setState(() {
-              _indexSelected = index;
-              _email = value;
-            }),
-          ),
+          authScreen,
           TermScreen(
               terms: terms,
               onChangedStep: (index) => setState(() => _indexSelected = index)),
-          PasswordScreen(
-              onChangedStep: (index, value) => setState(() {
-                    if (index != 3) {
-                      _indexSelected = index;
-                    }
-                    if (value != "") {
-                      _userService
-                          .auth(UserModel(email: _email, password: value))
-                          .then((value) {
-                        if (value != "" && value != null) {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => HomeScreen()));
-                        }
-                      });
-                    }
-                  }))
+          passwordScreen,
         ]);
       });
     });
